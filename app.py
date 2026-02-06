@@ -3,48 +3,53 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 
-# ----------------------------
-# Page config
-# ----------------------------
+# -------------------- PAGE CONFIG --------------------
 st.set_page_config(
     page_title="Plant Disease Detection",
     page_icon="🌱",
     layout="centered"
 )
 
-# ----------------------------
-# Custom CSS
-# ----------------------------
+# -------------------- CUSTOM CSS --------------------
 st.markdown("""
 <style>
-body {
-    background-color: #f4fff7;
-}
 .main {
-    background-color: #f4fff7;
+    background-color: #f6fff8;
 }
 .result-box {
     background-color: #ffffff;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
-    margin-top: 20px;
+    border: 1px solid #e0e0e0;
+}
+.disease {
+    font-size: 24px;
+    font-weight: 700;
+}
+.desc {
+    font-size: 16px;
+    color: #444;
+}
+.footer {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------------------
-# Load model
-# ----------------------------
+# -------------------- TITLE --------------------
+st.markdown("## 🌱 Plant Disease Detection")
+st.warning("⚠️ This model is trained **only for tomato leaves**")
+
+# -------------------- LOAD MODEL --------------------
 @st.cache_resource
 def load_model():
     return tf.keras.models.load_model("plant_disease_model.keras")
 
 model = load_model()
 
-# ----------------------------
-# Supported classes (TOMATO ONLY)
-# ----------------------------
+# -------------------- CLASS NAMES --------------------
 CLASS_NAMES = [
     "Tomato Bacterial Spot",
     "Tomato Early Blight",
@@ -55,82 +60,77 @@ CLASS_NAMES = [
     "Tomato Target Spot",
     "Tomato Yellow Leaf Curl Virus",
     "Tomato Mosaic Virus",
-    "Healthy Tomato Leaf"
+    "Tomato Healthy"
 ]
 
+# -------------------- DISEASE INFO --------------------
 DISEASE_INFO = {
-    "Tomato Bacterial Spot": "Bacterial disease causing dark, water-soaked spots. Avoid overhead irrigation.",
+    "Tomato Bacterial Spot": "Bacterial infection causing small water-soaked spots. Avoid overhead irrigation.",
     "Tomato Early Blight": "Fungal disease causing brown concentric rings on older leaves.",
-    "Tomato Late Blight": "Serious fungal disease with dark lesions. Remove infected plants immediately.",
-    "Tomato Leaf Mold": "Yellow patches on upper leaf surface with mold below.",
+    "Tomato Late Blight": "Serious fungal disease with dark water-soaked lesions.",
+    "Tomato Leaf Mold": "Yellow spots on upper leaf surface with mold underneath.",
     "Tomato Septoria Leaf Spot": "Small circular spots with dark borders.",
-    "Tomato Spider Mites": "Tiny pests causing yellow speckles and webbing.",
-    "Tomato Target Spot": "Brown lesions with concentric circles.",
-    "Tomato Yellow Leaf Curl Virus": "Leaf curling and yellowing, spread by whiteflies.",
-    "Tomato Mosaic Virus": "Mottled leaves and stunted growth.",
-    "Healthy Tomato Leaf": "Leaf appears healthy with no visible disease."
+    "Tomato Spider Mites": "Tiny pests causing yellowing and webbing on leaves.",
+    "Tomato Target Spot": "Brown lesions with target-like rings.",
+    "Tomato Yellow Leaf Curl Virus": "Virus causing leaf curling and yellowing.",
+    "Tomato Mosaic Virus": "Mosaic pattern and distorted leaves.",
+    "Tomato Healthy": "The tomato leaf appears healthy 🌿"
 }
 
-# ----------------------------
-# App UI
-# ----------------------------
-st.title("🌱 Plant Disease Detection")
-st.caption("⚠️ This model is trained **only for tomato leaves**")
-
-plant_choice = st.selectbox(
-    "Select plant type",
-    ["Tomato (Supported)", "Other plant (Not supported)"]
-)
-
+# -------------------- IMAGE UPLOAD --------------------
 uploaded_file = st.file_uploader(
     "Upload a leaf image",
     type=["jpg", "jpeg", "png"]
 )
 
-# ----------------------------
-# Prediction logic
-# ----------------------------
-if uploaded_file is not None:
+if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded Image", use_container_width=True)
 
+    # -------------------- PREPROCESS --------------------
     image = image.resize((224, 224))
     img_array = np.array(image) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
+    # -------------------- PREDICT --------------------
     prediction = model.predict(img_array)
     predicted_index = int(np.argmax(prediction))
-    
-    # Safe label handling
-    if predicted_index < len(CLASS_NAMES):
-        predicted_label = CLASS_NAMES[predicted_index]
-    else:
-        predicted_label = "Unknown / Non-Tomato Leaf"
 
-    description = DISEASE_INFO.get(
-        predicted_label,
-        "This plant is not supported by the model."
-    )
-
-    # ----------------------------
-    # Results
-    # ----------------------------
-    st.markdown("<div class='result-box'>", unsafe_allow_html=True)
     st.success("Prediction completed!")
 
-    st.markdown(f"### 🌿 Disease: **{predicted_label}**")
-    st.write(description)
-    
+    # -------------------- SAFE CLASS CHECK --------------------
+    if predicted_index < len(CLASS_NAMES):
+        predicted_label = CLASS_NAMES[predicted_index]
 
-    # Warnings
-    if plant_choice != "Tomato (Supported)":
-        st.warning("⚠️ Model is trained only on tomato leaves. Result may be incorrect.")
+        # -------------------- NON-TOMATO HANDLING --------------------
+        if "Tomato" not in predicted_label:
+            st.markdown("""
+            <div class="result-box">
+                <div class="disease">🌿 Disease: Unknown / Non-Tomato Leaf</div>
+                <div class="desc">This plant is not supported by the model.</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-   
-    st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            description = DISEASE_INFO.get(
+                predicted_label,
+                "No description available."
+            )
 
-# ----------------------------
-# Footer
-# ----------------------------
-st.markdown("---")
-st.caption("🚀 Built using TensorFlow + Streamlit | Hackathon Ready")
+            st.markdown(f"""
+            <div class="result-box">
+                <div class="disease">🍃 Disease: {predicted_label}</div>
+                <div class="desc">{description}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    else:
+        st.error("Prediction out of range. Please upload a clear tomato leaf image.")
+
+# -------------------- FOOTER --------------------
+st.markdown("""
+<hr>
+<div class="footer">
+🚀 Built using TensorFlow + Streamlit | Hackathon Ready
+</div>
+""", unsafe_allow_html=True)
