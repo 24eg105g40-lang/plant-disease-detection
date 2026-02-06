@@ -7,7 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1uTk-Bx7bksw3k8ZexcOPLlrFDR8CD-xX
 """
 
-!git clone https://github.com/spMohanty/PlantVillage-Dataset.git
 
 !ls PlantVillage-Dataset/raw/color | head
 
