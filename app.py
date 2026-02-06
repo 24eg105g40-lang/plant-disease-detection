@@ -112,3 +112,6 @@ if uploaded_file is not None:
     st.subheader(f"🦠 Disease: {predicted_label}")
     st.write(description)
     st.write(f"**Confidence:** {confidence:.2f}%")
+    if confidence < 70:
+    st.warning("⚠️ Low confidence prediction. Image may be healthy or unclear.")
+
