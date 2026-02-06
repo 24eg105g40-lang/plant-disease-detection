@@ -8,60 +8,40 @@ from PIL import Image
 # ---------------------------
 st.set_page_config(
     page_title="Tomato Leaf Disease Detection",
-    page_icon="🍅",
+    page_icon="🌱",
     layout="centered"
 )
 
 # ---------------------------
-# Custom CSS (Aesthetic & Clean)
+# Custom CSS
 # ---------------------------
 st.markdown("""
 <style>
-.stApp {
-    background: linear-gradient(135deg, #f0fff4, #e6f7f1);
-    font-family: 'Segoe UI', sans-serif;
+body {
+    background-color: #f4fff8;
 }
-
-h1 {
+.main-title {
     text-align: center;
-    color: #2f855a;
+    font-size: 42px;
     font-weight: 700;
 }
-
-.info-box {
-    background: #edfdf5;
-    border-left: 5px solid #38a169;
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    color: #22543d;
+.subtitle {
+    text-align: center;
+    color: #4b5563;
+    margin-bottom: 30px;
 }
-
 .result-card {
-    background: white;
-    border-radius: 14px;
-    padding: 20px;
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
     margin-top: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
-
-.disease-title {
-    color: #2f855a;
-    font-size: 22px;
-    font-weight: 600;
-}
-
-.description {
-    color: #4a5568;
-    margin-top: 10px;
-    line-height: 1.6;
-}
-
 .footer {
     text-align: center;
-    color: #718096;
-    font-size: 13px;
-    margin-top: 30px;
+    color: #6b7280;
+    margin-top: 40px;
+    font-size: 14px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -69,17 +49,11 @@ h1 {
 # ---------------------------
 # Title & description
 # ---------------------------
-st.title("🍅 Tomato Leaf Disease Detection")
-
+st.markdown("<div class='main-title'>🌱 Tomato Leaf Disease Detection</div>", unsafe_allow_html=True)
 st.markdown(
-    '<div class="info-box">ℹ️ This system is trained <b>only on tomato leaves</b>. '
-    'Uploading other plant leaves may give incorrect results.</div>',
+    "<div class='subtitle'>Upload a tomato leaf image to detect possible diseases. "
+    "This model is trained only on tomato leaves.</div>",
     unsafe_allow_html=True
-)
-
-st.write(
-    "Upload a tomato leaf image to identify whether it is healthy or affected by a disease. "
-    "The model is trained using the PlantVillage tomato dataset."
 )
 
 # ---------------------------
@@ -92,7 +66,7 @@ def load_model():
 model = load_model()
 
 # ---------------------------
-# Tomato class names
+# Tomato-only classes
 # ---------------------------
 CLASS_NAMES = [
     "Tomato Bacterial Spot",
@@ -107,39 +81,17 @@ CLASS_NAMES = [
     "Tomato Healthy"
 ]
 
-# ---------------------------
-# Tomato disease descriptions
-# ---------------------------
 DISEASE_INFO = {
-    "Tomato Bacterial Spot":
-        "Bacterial disease causing dark, water-soaked spots on leaves. Avoid overhead irrigation.",
-
-    "Tomato Early Blight":
-        "Fungal disease causing brown concentric rings on older leaves. Improve air circulation and avoid wet foliage.",
-
-    "Tomato Late Blight":
-        "Severe fungal disease causing dark, water-soaked lesions. Remove infected plants immediately.",
-
-    "Tomato Leaf Mold":
-        "Yellow spots on the upper leaf surface with mold growth underneath. Reduce humidity and improve ventilation.",
-
-    "Tomato Septoria Leaf Spot":
-        "Small circular spots with dark borders. Remove infected leaves and apply fungicide.",
-
-    "Tomato Spider Mites":
-        "Tiny pests causing yellow stippling and webbing on leaves. Use neem oil or insecticidal soap.",
-
-    "Tomato Target Spot":
-        "Brown lesions with target-like rings. Practice crop rotation and apply fungicides.",
-
-    "Tomato Yellow Leaf Curl Virus":
-        "Viral disease causing leaf curling and yellowing. Spread by whiteflies.",
-
-    "Tomato Mosaic Virus":
-        "Causes mottled leaves and stunted growth. Spread through contact with infected plants.",
-
-    "Tomato Healthy":
-        "The tomato leaf appears healthy with no visible disease symptoms."
+    "Tomato Bacterial Spot": "Bacterial infection causing dark, water-soaked spots on leaves.",
+    "Tomato Early Blight": "Fungal disease causing brown spots with concentric rings on older leaves.",
+    "Tomato Late Blight": "Serious fungal disease causing dark, water-soaked lesions.",
+    "Tomato Leaf Mold": "Fungal disease common in humid conditions, causing yellow patches.",
+    "Tomato Septoria Leaf Spot": "Causes small circular spots with dark borders.",
+    "Tomato Spider Mites": "Pest infestation causing stippling and webbing under leaves.",
+    "Tomato Target Spot": "Fungal disease with target-like spots on leaves.",
+    "Tomato Yellow Leaf Curl Virus": "Viral disease causing leaf curling and yellowing.",
+    "Tomato Mosaic Virus": "Viral infection causing mottled leaf patterns.",
+    "Tomato Healthy": "The tomato leaf appears healthy with no visible disease symptoms."
 }
 
 # ---------------------------
@@ -150,44 +102,51 @@ uploaded_file = st.file_uploader(
     type=["jpg", "jpeg", "png"]
 )
 
-# ---------------------------
-# Prediction
-# ---------------------------
 if uploaded_file is not None:
+    # Show image
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded Image", use_container_width=True)
 
+    # ---------------------------
     # Preprocess image
-    image = image.resize((224, 224))
-    img_array = np.array(image) / 255.0
+    # ---------------------------
+    image_resized = image.resize((224, 224))
+    img_array = np.array(image_resized) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
-    # Predict
+    # ---------------------------
+    # Prediction
+    # ---------------------------
     prediction = model.predict(img_array)
     predicted_index = int(np.argmax(prediction))
 
+    # Safety check
     if predicted_index < len(CLASS_NAMES):
         predicted_label = CLASS_NAMES[predicted_index]
     else:
         predicted_label = "Unknown Tomato Condition"
 
+    st.success("✅ Prediction completed!")
+
+    # ---------------------------
+    # Display result
+    # ---------------------------
+    st.markdown("<div class='result-card'>", unsafe_allow_html=True)
+
+    st.subheader(f"🌿 Disease: {predicted_label}")
+
     description = DISEASE_INFO.get(
         predicted_label,
         "The model could not confidently identify this tomato leaf condition."
     )
+    st.write(description)
 
-    # Display result
-    st.markdown(f"""
-    <div class="result-card">
-        <div class="disease-title">🌿 Disease: {predicted_label}</div>
-        <div class="description">{description}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------
 # Footer
 # ---------------------------
 st.markdown(
-    '<div class="footer">🚀 Tomato Leaf Disease Detection | TensorFlow + Streamlit</div>',
+    "<div class='footer'>🚀 Tomato Leaf Disease Detection | TensorFlow + Streamlit</div>",
     unsafe_allow_html=True
 )
