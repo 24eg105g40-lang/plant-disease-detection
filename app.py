@@ -170,12 +170,5 @@ if uploaded_file is not None:
     )
     st.write(description)
 
-    st.write(f"**Confidence:** {confidence:.2f}%")
-
-    # ---------------------------
-    # Low confidence warning
-    # ---------------------------
-    if confidence < 70:
-        st.warning("⚠️ Low confidence prediction. Image may be healthy or unclear.")
-
+    
 
