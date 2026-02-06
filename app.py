@@ -3,6 +3,20 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 
+CLASS_NAMES = [
+    "Bacterial spot",
+    "Early blight",
+    "Late blight",
+    "Leaf Mold",
+    "Septoria leaf spot",
+    "Spider mites",
+    "Target Spot",
+    "Tomato Yellow Leaf Curl Virus",
+    "Tomato Mosaic Virus",
+    "Healthy"
+]
+
+
 # App title
 st.title("🌱 Plant Disease Detection")
 
@@ -30,7 +44,11 @@ if uploaded_file is not None:
 
     # Predict
     prediction = model.predict(img_array)
-    predicted_class = np.argmax(prediction)
 
-    st.success(f"Prediction done ✅")
-    st.write("Predicted class index:", predicted_class)
+predicted_index = np.argmax(prediction)
+predicted_label = CLASS_NAMES[predicted_index]
+confidence = np.max(prediction) * 100
+
+st.success("Prediction done ✅")
+st.write(f"🌱 **Disease:** {predicted_label}")
+st.write(f"🔍 **Confidence:** {confidence:.2f}%")
